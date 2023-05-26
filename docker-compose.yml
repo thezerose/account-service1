@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  db_xtatuz:
+    image: postgres:13.5
+    restart: always
+    container_name: account-services
+    environment:
+      - POSTGRES_USER=${APP_USERNAME}
+      - POSTGRES_DB=${APP_DATABASE}
+      - POSTGRES_PASSWORD=${APP_PASSWORD}
+    ports:
+      - 5432:5432
+    volumes:
+      - db:/var/lib/postgresql/data
+volumes:
+  db:
