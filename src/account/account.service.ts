@@ -1,23 +1,25 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ConsumerService } from 'src/kafka/consumer.service';
-import { Account } from './entities/account.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { formatJson } from 'src/config/buffer-json';
-import { ProducerService } from 'src/kafka/producer.service';
-import { AccountRepository } from './account.repository';
+import { Injectable, OnModuleInit } from "@nestjs/common";
+import { ConsumerService } from "src/kafka/consumer.service";
+import { Account } from "./entities/account.entity";
+import { InjectRepository } from "@nestjs/typeorm";
+import { formatJson } from "src/config/buffer-json";
+import { ProducerService } from "src/kafka/producer.service";
+import { AccountRepository } from "./account.repository";
+import { AccountTopicEnum } from "src/constant/account.enum";
 
 @Injectable()
 export class AccountService implements OnModuleInit {
   constructor(
     private readonly consumerService: ConsumerService,
-    @InjectRepository(Account) private readonly accountRepositoryCustom: AccountRepository,
-    private readonly producerService: ProducerService,
+    @InjectRepository(Account)
+    private readonly accountRepositoryCustom: AccountRepository,
+    private readonly producerService: ProducerService
   ) {}
 
   async onModuleInit() {
     await this.consumerService.consume({
-      topic: { topic: 'account_check_user' },
-      config: { groupId: 'account-check-user-consumer' },
+      topic: { topic: AccountTopicEnum.ACCOUNT_CHECK_USER },
+      config: { groupId: AccountTopicEnum.ACCOUNT_CHECK_USER + "-consumer" },
       onMessage: async (message) => {
         const payloadData = formatJson(message.value);
         this.accountCheckUserHandler(payloadData);
@@ -25,8 +27,8 @@ export class AccountService implements OnModuleInit {
     });
 
     await this.consumerService.consume({
-      topic: { topic: 'account_update_balance' },
-      config: { groupId: 'account-update-consumer' },
+      topic: { topic: AccountTopicEnum.ACCOUNT_UPDATE_BALANCE },
+      config: { groupId: AccountTopicEnum.ACCOUNT_UPDATE_BALANCE + "-consumer" },
       onMessage: async (message) => {
         const payloadData = formatJson(message.value);
         this.accountUpdateBalanceHandler(payloadData);
@@ -38,54 +40,66 @@ export class AccountService implements OnModuleInit {
     const balance = await this.getBalanceByUser(payloadData.account_number);
 
     //เรียนกต่อ
-    let processType = '';
-    if (payloadData.payment_type === 'deposit') {
-      processType = 'deposit_process';
-    } else if (payloadData.payment_type === 'withdraw') {
-      processType = 'withdraw_process';
+    let processType = "";
+    if (payloadData.payment_type === "deposit") {
+      processType = AccountTopicEnum.DEPOSIT_SUCCESS;
+    } else if (payloadData.payment_type === "withdraw") {
+      processType = AccountTopicEnum.WITHDRAW_SUCCESS;
     }
 
-    if (processType !== '') {
-      await this.producerService.produce(processType, {
-        value: JSON.stringify({
-          ...payloadData,
-          balance: balance,
-        }),
-      });
+    if (processType !== "") {
+      const newPayloadData = {
+        ...payloadData,
+        balance: balance,
+      };
+      await this.emitEventNameHandler(processType, newPayloadData);
     }
   }
 
   async accountUpdateBalanceHandler(payloadData: any) {
     const user = await this.updateBalanceByUser(
       payloadData.account_number,
-      payloadData.new_balance,
+      payloadData.new_balance
     );
 
     //เรียนกต่อ
-    let processType = '';
-    if (payloadData.payment_type === 'deposit') {
-      processType = 'deposit_process_success';
-    } else if (payloadData.payment_type === 'withdraw') {
-      processType = 'withdraw_process_success';
+    let processType = "";
+    if (payloadData.payment_type === "deposit") {
+      processType = AccountTopicEnum.DEPOSIT_PROCESS_SUCCESS;
+    } else if (payloadData.payment_type === "withdraw") {
+      processType = AccountTopicEnum.WITHDRAW_PROCESS_SUCCESS;
     }
 
-    if (processType !== '') {
-      await this.producerService.produce(processType, {
-        value: JSON.stringify({
-          ...payloadData,
-          status: 'success',
-        }),
-      });
+    if (processType !== "") {
+      const newPayloadData = {
+        ...payloadData,
+        status: "success",
+      };
+
+      await this.emitEventNameHandler(processType, newPayloadData);
     }
   }
 
   async getBalanceByUser(userId: any) {
-    const account = await this.accountRepositoryCustom.findUserById(userId);
-    return account.balance ? account.balance : 0;
+    try {
+      const account = await this.accountRepositoryCustom.findUserById(userId);
+      return account.balance ? account.balance : 0;
+    } catch (error) {
+      console.log("gerror etBalanceByUser", error);
+    }
   }
 
   async updateBalanceByUser(userId: number, balance: number) {
-    const account = await this.accountRepositoryCustom.updateBalanceById(userId, balance)
+    const account = await this.accountRepositoryCustom.updateBalanceById(
+      userId,
+      balance
+    );
     return account;
+  }
+
+  async emitEventNameHandler(eventName: string, payloadData) {
+    await this.producerService.produce(eventName, {
+      value: JSON.stringify(payloadData),
+    });
   }
 }
