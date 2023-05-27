@@ -1,29 +1,37 @@
-import { DataSource, Repository } from 'typeorm';
-import { Account } from './entities/account.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Injectable } from '@nestjs/common';
+import { Repository } from "typeorm";
+import { Account } from "./entities/account.entity";
 
-@Injectable()
-export class AccountRepository extends Repository<Account> {
-  constructor(
-    private dataSource: DataSource,
-    @InjectRepository(Account) private accountRepository: Repository<Account>,
-  ) {
-    super(Account, dataSource.createEntityManager());
-  }
+export interface AccountRepository extends Repository<Account> {
+  this: Repository<Account>;
+  getUsers(): Promise<Account[]>;
+  getUser(id: number): Promise<Account>;
+  findUserById(id: number): Promise<Account>;
+  updateBalanceById(id: number, balance: number): Promise<Account>;
+}
 
-  async findUserById(id: number) {
-    return await this.accountRepository.findOneBy({
+export const customAccountRepository: Pick<AccountRepository, any> = {
+  getUser(this: Repository<Account>, id) {
+    return this.findOne({ where: { id } });
+  },
+
+  getUsers(this: Repository<Account>) {
+    return this.find();
+  },
+
+  findUserById(this: Repository<Account>, id: number) {
+    return this.findOneBy({
       account_number: id,
     });
-  }
+  },
 
-  async updateUserById(id: number, balance: number) {
-    const account = await this.accountRepository.findOneBy({
+  async updateBalanceById(this: Repository<Account>, id: number, balance: number) {
+    const account = await this.findOneBy({
       account_number: id,
     });
 
     account.balance = balance;
-    this.accountRepository.save(account);
+    this.save(account);
+
+    return await account;
   }
-}
+};

@@ -3,13 +3,27 @@ import { AccountService } from './account.service';
 import { ConsumerService } from 'src/kafka/consumer.service';
 //import { AccountRepository } from './account.repository';
 import { Account } from './entities/account.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { KafkaModule } from 'src/kafka/kafka.module';
-import { AccountRepository } from './account.repository';
+import {
+  getDataSourceToken,
+  getRepositoryToken,
+  TypeOrmModule,
+} from '@nestjs/typeorm';
+//import { AccountRepository } from './account.repository';
 import { ProducerService } from 'src/kafka/producer.service';
+import { DataSource } from 'typeorm';
+import { customAccountRepository } from './account.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Account])],
-  providers: [AccountService, ConsumerService, ProducerService],
+  providers: [
+    {
+      provide: getRepositoryToken(Account),
+      inject: [getDataSourceToken()],
+      useFactory(datasource: DataSource) {
+        return datasource.getRepository(Account).extend(customAccountRepository);
+      },
+    },
+    AccountService, ConsumerService, ProducerService,
+  ],
 })
 export class AccountModule {}

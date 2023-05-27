@@ -1,18 +1,16 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConsumerService } from 'src/kafka/consumer.service';
 import { Account } from './entities/account.entity';
-import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { formatJson } from 'src/config/buffer-json';
 import { ProducerService } from 'src/kafka/producer.service';
-//import { AccountRepository } from './account.repository';
+import { AccountRepository } from './account.repository';
 
 @Injectable()
 export class AccountService implements OnModuleInit {
   constructor(
     private readonly consumerService: ConsumerService,
-    //private accountRepository: AccountRepository,
-    @InjectRepository(Account) private accountRepository: Repository<Account>,
+    @InjectRepository(Account) private readonly accountRepositoryCustom: AccountRepository,
     private readonly producerService: ProducerService,
   ) {}
 
@@ -37,7 +35,7 @@ export class AccountService implements OnModuleInit {
   }
 
   async accountCheckUserHandler(payloadData: any) {
-    const user = await this.getBalanceByUser(payloadData.account_number);
+    const balance = await this.getBalanceByUser(payloadData.account_number);
 
     //เรียนกต่อ
     let processType = '';
@@ -51,7 +49,7 @@ export class AccountService implements OnModuleInit {
       await this.producerService.produce(processType, {
         value: JSON.stringify({
           ...payloadData,
-          balance: user.balance ? user.balance : 0,
+          balance: balance,
         }),
       });
     }
@@ -82,24 +80,12 @@ export class AccountService implements OnModuleInit {
   }
 
   async getBalanceByUser(userId: any) {
-    //const account = await this.accountRepository.findUserById(userId);
-    //return account.balance ? account.balance : undefined;
-    return await this.accountRepository.findOneBy({
-      account_number: userId,
-    });
+    const account = await this.accountRepositoryCustom.findUserById(userId);
+    return account.balance ? account.balance : 0;
   }
 
   async updateBalanceByUser(userId: number, balance: number) {
-    console.log('updateBalanceByUser');
-    // const account = await this.accountRepository.updateUserById(
-    //   userId,
-    //   balance,
-    // );
-    const account = await this.accountRepository.findOneBy({
-      account_number: userId,
-    });
-
-    account.balance = balance;
-    this.accountRepository.save(account);
+    const account = await this.accountRepositoryCustom.updateBalanceById(userId, balance)
+    return account;
   }
 }
