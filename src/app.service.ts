@@ -19,7 +19,7 @@ export class AppService {
       value: JSON.stringify({
         account_number: 1,
         amount: 10,
-        payment_type: 'cash',
+        payment_type: 'deposit',
       }),
     });
     return 'Hello World!';
@@ -32,6 +32,19 @@ export class AppService {
         account_number: 1,
         old_balance: 10,
         new_balance: 20,
+      }),
+    });
+    return 'Hello World! 3';
+  }
+
+  async getHello4() {
+    console.log('produce getHello 4');
+    await this.producerService.produce('account_check_user', {
+      value: JSON.stringify({
+        from_account_number: 1,
+        to_account_number: 2,
+        amount: 10,
+        payment_type: 'transfer',
       }),
     });
     return 'Hello World! 3';

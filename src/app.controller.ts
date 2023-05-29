@@ -19,4 +19,9 @@ export class AppController {
   getHello3() {
     return this.appService.getHello3();
   }
+
+  @Get('/d')
+  getHello4() {
+    return this.appService.getHello4();
+  }
 }

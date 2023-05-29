@@ -28,7 +28,9 @@ export class AccountService implements OnModuleInit {
 
     await this.consumerService.consume({
       topic: { topic: AccountTopicEnum.ACCOUNT_UPDATE_BALANCE },
-      config: { groupId: AccountTopicEnum.ACCOUNT_UPDATE_BALANCE + "-consumer" },
+      config: {
+        groupId: AccountTopicEnum.ACCOUNT_UPDATE_BALANCE + "-consumer",
+      },
       onMessage: async (message) => {
         const payloadData = formatJson(message.value);
         this.accountUpdateBalanceHandler(payloadData);
@@ -37,14 +39,29 @@ export class AccountService implements OnModuleInit {
   }
 
   async accountCheckUserHandler(payloadData: any) {
-    const balance = await this.getBalanceByUser(payloadData.account_number);
+    //const balance = await this.getBalanceByUser(payloadData.account_number);
 
+    let balance: number | { account_number: number; balance: number }[];
     //เรียนกต่อ
     let processType = "";
     if (payloadData.payment_type === "deposit") {
       processType = AccountTopicEnum.DEPOSIT_SUCCESS;
+      balance = await this.getBalanceByUser(payloadData.account_number);
     } else if (payloadData.payment_type === "withdraw") {
       processType = AccountTopicEnum.WITHDRAW_SUCCESS;
+      balance = await this.getBalanceByUser(payloadData.account_number);
+    } else if (payloadData.payment_type === "transfer") {
+      processType = AccountTopicEnum.TRANSFER_CHECK_SUCCESS;
+      balance = await Promise.all(
+        [payloadData.from_account_number, payloadData.to_account_number].map(
+          async (accountId) => {
+            return {
+              account_number: accountId,
+              balance: await this.getBalanceByUser(accountId),
+            };
+          }
+        )
+      );
     }
 
     if (processType !== "") {
