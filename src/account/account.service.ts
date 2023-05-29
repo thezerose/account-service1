@@ -47,8 +47,8 @@ export class AccountService implements OnModuleInit {
         const newPayloadData = {
           account_number: payloadData.account_number,
           new_balance: payloadData.new_balance,
-          payment_type: 'transfer',
-          section_payment_type: payloadData.payment_type,
+          payment_type: payloadData.payment_type,
+          section_payment_type: payloadData.section_payment_type,
         }
         this.accountUpdateBalanceHandler(newPayloadData);
       },
