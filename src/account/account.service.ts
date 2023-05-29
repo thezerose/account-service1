@@ -45,7 +45,7 @@ export class AccountService implements OnModuleInit {
       onMessage: async (message) => {
         const payloadData = formatJson(message.value);
         const newPayloadData = {
-          account_number: payloadData.from_account_number,
+          account_number: payloadData.account_number,
           new_balance: payloadData.new_balance,
           payment_type: 'transfer',
           section_payment_type: payloadData.payment_type,
