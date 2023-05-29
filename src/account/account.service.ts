@@ -36,6 +36,23 @@ export class AccountService implements OnModuleInit {
         this.accountUpdateBalanceHandler(payloadData);
       },
     });
+
+    await this.consumerService.consume({
+      topic: { topic: AccountTopicEnum.TRANSFER_ACCOUNT_UPDATE_BALABCE },
+      config: {
+        groupId: AccountTopicEnum.TRANSFER_ACCOUNT_UPDATE_BALABCE + "-consumer",
+      },
+      onMessage: async (message) => {
+        const payloadData = formatJson(message.value);
+        const newPayloadData = {
+          account_number: payloadData.from_account_number,
+          new_balance: payloadData.new_balance,
+          payment_type: 'transfer',
+          section_payment_type: payloadData.payment_type,
+        }
+        this.accountUpdateBalanceHandler(newPayloadData);
+      },
+    });
   }
 
   async accountCheckUserHandler(payloadData: any) {
@@ -85,6 +102,13 @@ export class AccountService implements OnModuleInit {
       processType = AccountTopicEnum.DEPOSIT_PROCESS_SUCCESS;
     } else if (payloadData.payment_type === "withdraw") {
       processType = AccountTopicEnum.WITHDRAW_PROCESS_SUCCESS;
+    } else if (payloadData.payment_type === "transfer") {
+      if(payloadData.section_payment_type === 'withdraw') {
+        processType = AccountTopicEnum.TRANSFER_WITHDRAW_PROCESS_SUCCESS;
+      } else if(payloadData.section_payment_type === 'deposit') {
+        processType = AccountTopicEnum.TRANSFER_DEPOSIT_PROCESS_SUCCESS;
+      }
+      
     }
 
     if (processType !== "") {
@@ -115,6 +139,7 @@ export class AccountService implements OnModuleInit {
   }
 
   async emitEventNameHandler(eventName: string, payloadData) {
+    console.log('Account -> call event -> ', eventName)
     await this.producerService.produce(eventName, {
       value: JSON.stringify(payloadData),
     });

@@ -49,4 +49,18 @@ export class AppService {
     });
     return 'Hello World! 3';
   }
+
+  async getHello5() {
+    console.log('produce getHello 5');
+    await this.producerService.produce('transfer_account_update_balance', {
+      value: JSON.stringify({
+        from_account_number: 1,
+        balance: 20,
+        amount: 5,
+        new_balance: 15,
+        payment_type: "withdraw"
+      }),
+    });
+    return 'Hello World! 5';
+  }
 }

@@ -24,4 +24,9 @@ export class AppController {
   getHello4() {
     return this.appService.getHello4();
   }
+
+  @Get('/e')
+  getHello5() {
+    return this.appService.getHello5();
+  }
 }
