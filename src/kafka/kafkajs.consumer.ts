@@ -9,12 +9,15 @@ import {
 import * as retry from 'async-retry';
 import { sleep } from '../utils/sleep';
 import { IConsumer } from './consumer.interface';
+import { ProducerService } from './producer.service';
 //import { DatabaseService } from '../database/database.service';
 
 export class KafkajsConsumer implements IConsumer {
   private readonly kafka: Kafka;
   private readonly consumer: Consumer;
   private readonly logger: Logger;
+
+  private readonly producerService: ProducerService;
 
   constructor(
     private readonly topic: ConsumerSubscribeTopic,
@@ -46,6 +49,9 @@ export class KafkajsConsumer implements IConsumer {
             'Error consuming message. Adding to dead letter queue...',
             err,
           );
+          await this.producerService.produce('transfer_error_handler', {
+            value: JSON.stringify(message),
+          });
           //await this.addMessageToDlq(message);
         }
       },
