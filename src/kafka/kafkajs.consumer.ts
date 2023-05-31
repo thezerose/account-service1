@@ -9,6 +9,7 @@ import {
 import * as retry from 'async-retry';
 import { sleep } from '../utils/sleep';
 import { IConsumer } from './consumer.interface';
+import { ConfigService } from '@nestjs/config';
 import { ProducerService } from './producer.service';
 //import { DatabaseService } from '../database/database.service';
 
@@ -28,6 +29,9 @@ export class KafkajsConsumer implements IConsumer {
     this.kafka = new Kafka({ brokers: [broker] });
     this.consumer = this.kafka.consumer(config);
     this.logger = new Logger(`${topic.topic}-${config.groupId}`);
+
+    const configService = new ConfigService();
+    this.producerService = new ProducerService(configService);
   }
 
   async consume(onMessage: (message: KafkaMessage) => Promise<void>) {
@@ -49,7 +53,7 @@ export class KafkajsConsumer implements IConsumer {
             'Error consuming message. Adding to dead letter queue...',
             err,
           );
-          await this.producerService.produce('transfer_error_handler', {
+          this.producerService.produce('transfer_error_handler', {
             value: JSON.stringify(message),
           });
           //await this.addMessageToDlq(message);
