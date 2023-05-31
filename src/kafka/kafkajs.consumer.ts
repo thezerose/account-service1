@@ -11,6 +11,7 @@ import { sleep } from '../utils/sleep';
 import { IConsumer } from './consumer.interface';
 import { ConfigService } from '@nestjs/config';
 import { ProducerService } from './producer.service';
+import { formatJson } from 'src/config/buffer-json';
 //import { DatabaseService } from '../database/database.service';
 
 export class KafkajsConsumer implements IConsumer {
@@ -54,7 +55,7 @@ export class KafkajsConsumer implements IConsumer {
             err,
           );
           this.producerService.produce('transfer_error_handler', {
-            value: JSON.stringify(message),
+            value: JSON.stringify(formatJson(message.value)),
           });
           //await this.addMessageToDlq(message);
         }
