@@ -33,7 +33,8 @@ export class AccountService implements OnModuleInit {
       },
       onMessage: async (message) => {
         const payloadData = formatJson(message.value);
-        this.accountUpdateBalanceHandler(payloadData);
+        await this.accountUpdateBalance(payloadData);
+        this.accountCallTopicHandler(payloadData);
       },
     });
 
@@ -44,13 +45,12 @@ export class AccountService implements OnModuleInit {
       },
       onMessage: async (message) => {
         const payloadData = formatJson(message.value);
-        const newPayloadData = {
-          account_number: payloadData.account_number,
-          new_balance: payloadData.new_balance,
-          payment_type: payloadData.payment_type,
-          section_payment_type: payloadData.section_payment_type,
-        }
-        this.accountUpdateBalanceHandler(newPayloadData);
+
+        await this.accountUpdateBalance(payloadData.from_account);
+        await this.accountUpdateBalance(payloadData.to_account);
+
+        this.accountCallTopicHandler(payloadData);
+
       },
     });
   }
@@ -90,12 +90,14 @@ export class AccountService implements OnModuleInit {
     }
   }
 
-  async accountUpdateBalanceHandler(payloadData: any) {
-    const user = await this.updateBalanceByUser(
+  async accountUpdateBalance(payloadData: any) {
+    return await this.updateBalanceByUser(
       payloadData.account_number,
       payloadData.new_balance
     );
+  }
 
+  async accountCallTopicHandler(payloadData: any) {
     //เรียนกต่อ
     let processType = "";
     if (payloadData.payment_type === "deposit") {
@@ -103,12 +105,7 @@ export class AccountService implements OnModuleInit {
     } else if (payloadData.payment_type === "withdraw") {
       processType = AccountTopicEnum.WITHDRAW_PROCESS_SUCCESS;
     } else if (payloadData.payment_type === "transfer") {
-      if(payloadData.section_payment_type === 'withdraw') {
-        processType = AccountTopicEnum.TRANSFER_WITHDRAW_PROCESS_SUCCESS;
-      } else if(payloadData.section_payment_type === 'deposit') {
-        processType = AccountTopicEnum.TRANSFER_DEPOSIT_PROCESS_SUCCESS;
-      }
-      
+      processType = AccountTopicEnum.TRANSFER_PROCESS_SUCCESS;
     }
 
     if (processType !== "") {

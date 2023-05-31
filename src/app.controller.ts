@@ -5,27 +5,27 @@ import { AppService } from './app.service';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get('/a')
+  @Get('/test')
   getHello() {
     return this.appService.getHello();
   }
 
-  @Get('/b')
+  @Get('/account_check_user')
   getHello2() {
     return this.appService.getHello2();
   }
 
-  @Get('/c')
+  @Get('/account_update_balance')
   getHello3() {
     return this.appService.getHello3();
   }
 
-  @Get('/d')
+  @Get('/account_check_user')
   getHello4() {
     return this.appService.getHello4();
   }
 
-  @Get('/e')
+  @Get('/transfer_account_update_balance')
   getHello5() {
     return this.appService.getHello5();
   }

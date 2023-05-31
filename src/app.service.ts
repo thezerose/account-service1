@@ -14,7 +14,7 @@ export class AppService {
   }
 
   async getHello2() {
-    console.log('produce getHello 2');
+    console.log('produce account_check_user');
     await this.producerService.produce('account_check_user', {
       value: JSON.stringify({
         account_number: 1,
@@ -22,11 +22,11 @@ export class AppService {
         payment_type: 'deposit',
       }),
     });
-    return 'Hello World!';
+    return 'account_check_user';
   }
 
   async getHello3() {
-    console.log('produce getHello 3');
+    console.log('produce account_update_balance');
     await this.producerService.produce('account_update_balance', {
       value: JSON.stringify({
         account_number: 1,
@@ -34,11 +34,11 @@ export class AppService {
         new_balance: 20,
       }),
     });
-    return 'Hello World! 3';
+    return 'account_update_balance';
   }
 
   async getHello4() {
-    console.log('produce getHello 4');
+    console.log('produce account_check_user');
     await this.producerService.produce('account_check_user', {
       value: JSON.stringify({
         from_account_number: 1,
@@ -47,20 +47,20 @@ export class AppService {
         payment_type: 'transfer',
       }),
     });
-    return 'Hello World! 3';
+    return 'account_check_user';
   }
 
   async getHello5() {
-    console.log('produce getHello 5');
+    console.log('produce transfer_account_update_balance');
     await this.producerService.produce('transfer_account_update_balance', {
       value: JSON.stringify({
-        account_number: 1,
-        balance: 20,
-        amount: 5,
-        new_balance: 15,
-        payment_type: "withdraw"
+        from_account: { account_number: '1', old_balance: 387, new_balance: 386 },
+        to_account: { account_number: '2', old_balance: 764, new_balance: 712 },
+        amount: 1,
+        payment_type: 'transfer',
+        transactionId: 123456
       }),
     });
-    return 'Hello World! 5';
+    return 'transfer_account_update_balance';
   }
 }

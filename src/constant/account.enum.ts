@@ -9,6 +9,5 @@ export const AccountTopicEnum = {
     TRANSFER_CHECK_SUCCESS: 'transfer_check_process_success',
     WITHDRAW_SUCCESS: 'withdraw_process',
     DEPOSIT_SUCCESS: 'deposit_process',
-    TRANSFER_WITHDRAW_PROCESS_SUCCESS: 'transfer_withdraw_process_success',
-    TRANSFER_DEPOSIT_PROCESS_SUCCESS: 'transfer_deposit_process_success',
+    TRANSFER_PROCESS_SUCCESS: 'transfer_process_success',
 }
